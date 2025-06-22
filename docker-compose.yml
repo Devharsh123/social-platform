@@ -1,0 +1,54 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  gateway-api:
+    build:
+      context: ./gateway-api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - auth-service
+      - user-service
+    env_file:
+      - ./gateway-api/.env
+
+  auth-service:
+    build:
+      context: ./auth-service
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+      - rabbitmq
+    env_file:
+      - ./auth-service/.env
+
+  user-service:
+    build:
+      context: ./user-service
+    ports:
+      - "3002:3002"
+    depends_on:
+      - postgres
+      - rabbitmq
+    env_file:
+      - ./user-service/.env
+
+volumes:
+  postgres-data:
